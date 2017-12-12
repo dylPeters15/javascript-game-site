@@ -5,8 +5,6 @@ function start() {
     console.log("loaded");
 }
 
-
-
 class JumpGame {
     constructor() {
         var _self = this;
@@ -17,24 +15,31 @@ class JumpGame {
 
         this._upButton = document.createElement("BUTTON");
         this._upButton.textContent = "Up";
-        this._upButton.onclick = function(){
+        this._upButton.onclick = function() {
             _self._gameArea.up();
+        };
+
+        this._downButton = document.createElement("BUTTON");
+        this._downButton.textContent = "Down";
+        this._downButton.onclick = function() {
+            _self._gameArea.down();
         };
 
         this._startButton = document.createElement("BUTTON");
         this._startButton.textContent = "Start";
-        this._startButton.onclick = function(){
+        this._startButton.onclick = function() {
             _self._gameArea.start();
         };
 
         this._resetButton = document.createElement("BUTTON");
         this._resetButton.textContent = "Reset";
-        this._resetButton.onclick = function(){
+        this._resetButton.onclick = function() {
             _self._gameArea.reset();
         };
 
         this._displayItem.appendChild(this._gameArea.displayItem);
         this._displayItem.appendChild(this._upButton);
+        this._displayItem.appendChild(this._downButton);
         this._displayItem.appendChild(this._startButton);
         this._displayItem.appendChild(this._resetButton);
     }
@@ -51,6 +56,10 @@ class GameArea {
         this._frameNo = 0;
         this._gravity = 0.05;
         this._interval = null;
+        this._running = false;
+
+        this._playerBlock = new PlayerBlock(30, 30, "red", 10, 120, 5, 5);
+
         this.reset();
     }
     get displayItem() {
@@ -58,27 +67,49 @@ class GameArea {
     }
     start() {
         console.log("start");
-        
-        this._interval = setInterval(this._updateGameArea, 20);
+        this._running = true;
+
+        var _self = this;
+        this._interval = setInterval(function() {
+            _self._updateGameArea(_self);
+        }, 20);
     }
     reset() {
         console.log("reset");
+        this._running = false;
 
         clearInterval(this._interval);
         this._interval = null;
-        
-        this._canvas.getContext("2d").fillStyle = "red";
-        this._canvas.getContext("2d").fillRect(10, 120, 30, 30);
+
+        this._playerBlock = new PlayerBlock(30, 30, "red", 10, 120, 5, 5);
+
+        this._drawCanvas(this);
     }
     up() {
         console.log("up");
+        if (this._running) {
+            this._playerBlock.up();
+            this._drawCanvas(this);
+        }
     }
-    _updateGameArea(){
+    down() {
+        console.log("down");
+        if (this._running) {
+            this._playerBlock.down();
+            this._drawCanvas(this);
+        }
+    }
+    _updateGameArea(_self) {
         console.log("Update");
+        //console.log(_self);
+        _self._drawCanvas(_self);
+    }
+    _drawCanvas(_self) {
+        _self._canvas.getContext("2d").clearRect(0, 0, _self._canvas.width, _self._canvas.height);
+        _self._playerBlock.drawOnCanvas(_self._canvas);
     }
 }
 
-/*
 class AbstractMethodException {
     constructor() {
         this._description = "Cannot run abstract method.";
@@ -89,151 +120,133 @@ class AbstractMethodException {
 }
 
 class AbstractComponent {
-    constructor(width, height, color, x, y){
+    constructor(width, height, color, x, y) {
         this._width = width;
         this._height = height;
         this._color = color;
         this._x = x;
         this._y = y;
     }
-    update(params) {
+    drawOnCanvas(canvas) {
         throw new AbstractMethodException();
     }
+    get width() {
+        return this._width
+    }
+    set width(width) {
+        this._width = width;
+    }
+    get height() {
+        return this._height;
+    }
+    set height(height) {
+        this._height = height;
+    }
+    get color() {
+        return this._color;
+    }
+    set color(color) {
+        this._color = color;
+    }
+    get x() {
+        return this._x;
+    }
+    set x(x) {
+        this._x = x;
+    }
+    get y() {
+        return this._y;
+    }
+    set y(y) {
+        this._y = y;
+    }
 }
 
-class TextComponent {
-    constructor(width, height, color, x, y){
+class RectangleComponent extends AbstractComponent {
+    constructor(width, height, color, x, y) {
         super(width, height, color, x, y);
     }
-    update(params){
-
+    drawOnCanvas(canvas) {
+        var context = canvas.getContext("2d");
+        context.fillStyle = this.color;
+        context.fillRect(this.x, this.y, this.width, this.height);
     }
 }
 
-class Component {
-    constructor(width, height, color, x, y, type){
-        this.type = type;
-        this.score = 0;
-        this.width = width;
-        this.height = height;
-        this.speedX = 0;
-        this.speedY = 0;    
-        this.x = x;
-        this.y = y;
-        this.gravity = 0;
-        this.gravitySpeed = 0;
+class PlayerBlock extends RectangleComponent {
+    constructor(width, height, color, x, y, xStep, yStep) {
+        super(width, height, color, x, y);
+        this._xStep = xStep;
+        this._yStep = yStep;
     }
-    update() {
-        ctx = myGameArea.context;
-        if (this.type == "text") {
-            ctx.font = this.width + " " + this.height;
-            ctx.fillStyle = color;
-            ctx.fillText(this.text, this.x, this.y);
-        } else {
-            ctx.fillStyle = color;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
-        }
+    get xStep() {
+        return this._xStep;
     }
-    newPos() {
-        this.gravitySpeed += this.gravity;
-        this.x += this.speedX;
-        this.y += this.speedY + this.gravitySpeed;
-        this.hitBottom();
+    set xStep(xStep) {
+        this._xStep = xStep;
     }
-    hitBottom() {
-        var rockbottom = myGameArea.canvas.height - this.height;
-        if (this.y > rockbottom) {
-            this.y = rockbottom;
-            this.gravitySpeed = 0;
-        }
+    get yStep() {
+        return this._yStep;
     }
-    crashWith(otherobj) {
-        var myleft = this.x;
-        var myright = this.x + (this.width);
-        var mytop = this.y;
-        var mybottom = this.y + (this.height);
-        var otherleft = otherobj.x;
-        var otherright = otherobj.x + (otherobj.width);
-        var othertop = otherobj.y;
-        var otherbottom = otherobj.y + (otherobj.height);
-        var crash = true;
-        if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
-            crash = false;
-        }
-        return crash;
+    set yStep(yStep) {
+        this._yStep = yStep;
     }
-}
-*/
-
-/*class GameArea {
-    constructor() {
-        this.canvas = document.createElement("canvas");
-        this.canvas.width = 480;
-        this.canvas.height = 270;
-        this.context = this.canvas.getContext("2d");
-        this.frameNo = 0;
-        //this.interval = setInterval(updateGameArea, 20);
+    up() {
+        this.y -= this.yStep;
     }
-    start() {
-        
+    down() {
+        this.y += this.yStep
     }
-    clear() {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    left() {
+        this.x -= this.xStep;
+    }
+    right() {
+        this.x += this.xStep;
     }
 }
 
-class Component {
-    constructor(width, height, color, x, y, type){
-        this.type = type;
-        this.score = 0;
-        this.width = width;
-        this.height = height;
-        this.speedX = 0;
-        this.speedY = 0;    
-        this.x = x;
-        this.y = y;
-        this.gravity = 0;
-        this.gravitySpeed = 0;
+class ConstantSpeedRectangleComponent extends RectangleComponent {
+    constructor(width, height, color, x, y, xVel, yVel) {
+        super(width, height, color, x, y);
+        this._xVel = xVel;
+        this._yVel = yVel;
     }
-    update() {
-        ctx = myGameArea.context;
-        if (this.type == "text") {
-            ctx.font = this.width + " " + this.height;
-            ctx.fillStyle = color;
-            ctx.fillText(this.text, this.x, this.y);
-        } else {
-            ctx.fillStyle = color;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
-        }
+    get xVel() {
+        return this._xVel;
     }
-    newPos() {
-        this.gravitySpeed += this.gravity;
-        this.x += this.speedX;
-        this.y += this.speedY + this.gravitySpeed;
-        this.hitBottom();
+    set xVel(xVel) {
+        this._xVel = xVel;
     }
-    hitBottom() {
-        var rockbottom = myGameArea.canvas.height - this.height;
-        if (this.y > rockbottom) {
-            this.y = rockbottom;
-            this.gravitySpeed = 0;
-        }
+    get yVel() {
+        return this._yVel;
     }
-    crashWith(otherobj) {
-        var myleft = this.x;
-        var myright = this.x + (this.width);
-        var mytop = this.y;
-        var mybottom = this.y + (this.height);
-        var otherleft = otherobj.x;
-        var otherright = otherobj.x + (otherobj.width);
-        var othertop = otherobj.y;
-        var otherbottom = otherobj.y + (otherobj.height);
-        var crash = true;
-        if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
-            crash = false;
-        }
-        return crash;
+    set yVel(yVel) {
+        this._yVel = yVel;
+    }
+    update(timeElapsed) {
+        this.x = this.x + timeElapsed * this.xVel;
+        this.y = this.y + timeElapsed * this.yVel;
     }
 }
 
-*/
+class ScoreComponent extends AbstractComponent {
+    constructor(width, height, color, x, y) {
+        super(width, height, color, x, y);
+        this._score = 0;
+    }
+    drawOnCanvas(canvas) {
+        var context = canvas.getContext("2d");
+        context.font = this.width + this.height;
+        context.fillStyle = this.color;
+        context.fillText(this.text, this.x, this.y);
+    }
+    get score() {
+        return this._score;
+    }
+    set score(newScore) {
+        this._score = newScore;
+    }
+    get text() {
+        return "Score: " + this.score;
+    }
+}
