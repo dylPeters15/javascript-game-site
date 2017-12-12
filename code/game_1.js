@@ -53,12 +53,16 @@ class GameArea {
         this._canvas = document.createElement("canvas");
         this._canvas.width = 480;
         this._canvas.height = 270;
-        this._frameNo = 0;
+        this._frameNum = 0;
         this._gravity = 0.05;
         this._interval = null;
         this._running = false;
 
         this._playerBlock = new PlayerBlock(30, 30, "red", 10, 120, 5, 5);
+        this._obstacles = [];
+
+        this._frameDurationMils = 20;
+        this._framesPerNewObstacle = 150;
 
         this.reset();
     }
@@ -82,6 +86,12 @@ class GameArea {
         this._interval = null;
 
         this._playerBlock = new PlayerBlock(30, 30, "red", 10, 120, 5, 5);
+        for (var i = 0; i < 3; i++){
+            this._addObstacle();
+            for (var j = 0; j < this._obstacles.length; j++){
+                this._obstacles[i].update(this._frameDurationMils * this._framesPerNewObstacle);
+            }
+        }
 
         this._drawCanvas(this);
     }
@@ -102,11 +112,35 @@ class GameArea {
     _updateGameArea(_self) {
         console.log("Update");
         //console.log(_self);
+        _self._frameNum++;
+
+        if (_self._frameNum % _self._framesPerNewObstacle == 0) {
+            _self._addObstacle();
+        }
+
+        for (var i = 0; i < _self._obstacles.length; i++){
+            _self._obstacles[i].update(_self._frameDurationMils);
+        }
+
         _self._drawCanvas(_self);
     }
     _drawCanvas(_self) {
         _self._canvas.getContext("2d").clearRect(0, 0, _self._canvas.width, _self._canvas.height);
         _self._playerBlock.drawOnCanvas(_self._canvas);
+        for (var i = 0; i < _self._obstacles.length; i++){
+            _self._obstacles[i].drawOnCanvas(_self._canvas);
+        }
+    }
+    _addObstacle(){
+        var x = this._canvas.width;
+        var minHeight = 20;
+        var maxHeight = 200;
+        var height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
+        var minGap = 50;
+        var maxGap = 200;
+        var gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
+        this._obstacles.push(new ConstantSpeedRectangleComponent(10, height, "green", x, 0, -1, 0));
+        this._obstacles.push(new ConstantSpeedRectangleComponent(10, x - height - gap, "green", x, height + gap, -1, 0));    
     }
 }
 
