@@ -86,9 +86,9 @@ class GameArea {
         this._interval = null;
 
         this._playerBlock = new PlayerBlock(30, 30, "red", 10, 120, 5, 5);
-        for (var i = 0; i < 3; i++){
+        for (var i = 0; i < 3; i++) {
             this._addObstacle();
-            for (var j = 0; j < this._obstacles.length; j++){
+            for (var j = 0; j < this._obstacles.length; j++) {
                 this._obstacles[i].update(this._frameDurationMils * this._framesPerNewObstacle);
             }
         }
@@ -118,7 +118,7 @@ class GameArea {
             _self._addObstacle();
         }
 
-        for (var i = 0; i < _self._obstacles.length; i++){
+        for (var i = 0; i < _self._obstacles.length; i++) {
             _self._obstacles[i].update(_self._frameDurationMils);
         }
 
@@ -127,11 +127,11 @@ class GameArea {
     _drawCanvas(_self) {
         _self._canvas.getContext("2d").clearRect(0, 0, _self._canvas.width, _self._canvas.height);
         _self._playerBlock.drawOnCanvas(_self._canvas);
-        for (var i = 0; i < _self._obstacles.length; i++){
+        for (var i = 0; i < _self._obstacles.length; i++) {
             _self._obstacles[i].drawOnCanvas(_self._canvas);
         }
     }
-    _addObstacle(){
+    _addObstacle() {
         var x = this._canvas.width;
         var minHeight = 20;
         var maxHeight = 200;
@@ -139,8 +139,8 @@ class GameArea {
         var minGap = 50;
         var maxGap = 200;
         var gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
-        this._obstacles.push(new ConstantSpeedRectangleComponent(10, height, "green", x, 0, -1, 0));
-        this._obstacles.push(new ConstantSpeedRectangleComponent(10, x - height - gap, "green", x, height + gap, -1, 0));    
+        this._obstacles.push(new ConstantSpeedRectangleComponent(10, height, "green", x, 0, -0.1, 0));
+        this._obstacles.push(new ConstantSpeedRectangleComponent(10, x - height - gap, "green", x, height + gap, -0.1, 0));    
     }
 }
 
